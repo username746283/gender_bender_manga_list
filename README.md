@@ -1,5 +1,5 @@
 # Gender Bender Manga list
-**View it:** https://htmlpreview.github.io/https://github.com/username746283/gender_bender_manga_list/index.html
+**View it:** https://username746283.github.io/gender_bender_manga_list/index.html
 ## Contributing:
 welcome are:
 - bug-fixes
