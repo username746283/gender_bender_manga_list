@@ -1,540 +1,677 @@
 <!DOCTYPE HTML>
 <html>
-  <!-- https://htmlpreview.github.io/ -->
+	<!--
+		LICENSE: as long as you dont claim to be the owner do whatever you want
+	-->
 
-  <!--
-    LICENSE: as long as you dont claim to be the owner do whatever you want
-  -->
+	<!--
+		This is meant to be a single file (therefore everything si crammed in here), which
+		can be used on any device without anything external (therefore no php, etc).
+		Why? because i want to share it without having a public website
 
-  <!--
-    This is meant to be a single file (therefore everything si crammed in here), which
-    can be used on any device without anything external (therefore no php, etc).
-    Why? because i want to share it without having a public website
+		How:
+		1. User puts in search categories in html and triggers JS via "search"
+		2. JS filters an 2d-array (1st for anime list, 2nd for infos for each one)
+			and constructs a html-code string for a table
+		3. JS edits the html and puts the generated html-code into the "table" div
 
-    How:
-    1. User puts in search categories in html and triggers JS via "search"
-    2. JS filters an 2d-array (1st for anime list, 2nd for infos for each one)
-      and constructs a html-code string for a table
-    3. JS edits the html and puts the generated html-code into the "table" div
+		i intend to let users view it without downloading using
+			https://htmlpreview.github.io/<git-hub-html-file link (with slashes)>
 
-    i intend to let users view it without downloading using
-      https://htmlpreview.github.io/<git-hub-html-file link (with slashes)>
+		@Contributors: please dont add H* disguising itself as normal and avoid spoilers
+	-->
 
-    @Contributors: please dont add H* disguising itself as normal and avoid spoilers
-  -->
+	<head>
+		<title>GB Manga List</title>
+		<meta charset="utf-8">
+		<meta name="author" content="reddit/u/Jane6447">
+		<meta content="width=device-width, initial-scale=1" name="viewport" />
+		<script>
+			function deselAll_types(){
+				for (let i=0; i<=11; i++){
+					document.getElementById("type_"+i).checked = false;
+				}
+			}
+			function selAll_types(){
+				for (let i=0; i<=11; i++){
+					document.getElementById("type_"+i).checked = true;
+				}
+			}
+			function selAllAFAB(){
+				document.getElementById("type_3").checked =true;
+				document.getElementById("type_4").checked =true;
+				document.getElementById("type_5").checked =true;
+				document.getElementById("type_6").checked =true;
+				document.getElementById("type_9").checked =true;
+				document.getElementById("type_11").checked =true;
+			}
+			function selAllAMAB(){
+				document.getElementById("type_1").checked =true;
+				document.getElementById("type_2").checked =true;
+				document.getElementById("type_5").checked =true;
+				document.getElementById("type_6").checked =true;
+				document.getElementById("type_8").checked =true;
+				document.getElementById("type_9").checked =true;
+				document.getElementById("type_10").checked =true;
+			}
+			function deselAll_setting(){
+				for (let i=0; i<=6; i++){
+					document.getElementById("setting_"+i).checked = false;
+				}
+			}
+			function selAll_setting(){
+				for (let i=0; i<=6; i++){
+					document.getElementById("setting_"+i).checked = true;
+				}
+			}
+			function generate(){
+				var types = [];
+				for (let i=0; i<=11; i++){
+					if(document.getElementById("type_"+i).checked){
+						types.push(i);
+					}
+				}
+				var settings = [];
+				for (let i=0; i<=6; i++){
+					if(document.getElementById("setting_"+i).checked){
+						settings.push(i);
+					}
+				}
+				var showUnkTrigger = document.getElementById("allowUnrated").checked;
+				var minTrigger = document.getElementById("offenseSlider").value;
+				var showOffenseRating = document.getElementById("showOffenseRating").checked;
+				var showType = document.getElementById("showType").checked;
+				var showSetting = document.getElementById("showSetting").checked;
 
-  <head>
-    <title>GB Manga List</title>
-    <script>
-      function deselAll_types(){
-        for (let i=0; i<=10; i++){
-          document.getElementById("type_"+i).checked = false;
-        }
-      }
-      function selAll_types(){
-        for (let i=0; i<=10; i++){
-          document.getElementById("type_"+i).checked = true;
-        }
-      }
-      function selAllAFAB(){
-        document.getElementById("type_3").checked =true;
-        document.getElementById("type_4").checked =true;
-        document.getElementById("type_5").checked =true;
-        document.getElementById("type_6").checked =true;
-        document.getElementById("type_9").checked =true;
-        document.getElementById("type_11").checked =true;
-      }
-      function selAllAMAB(){
-        document.getElementById("type_1").checked =true;
-        document.getElementById("type_2").checked =true;
-        document.getElementById("type_5").checked =true;
-        document.getElementById("type_6").checked =true;
-        document.getElementById("type_8").checked =true;
-        document.getElementById("type_9").checked =true;
-        document.getElementById("type_10").checked =true;
-      }
-      function deselAll_setting(){
-        for (let i=0; i<=6; i++){
-          document.getElementById("setting_"+i).checked = false;
-        }
-      }
-      function selAll_setting(){
-        for (let i=0; i<=6; i++){
-          document.getElementById("setting_"+i).checked = true;
-        }
-      }
-      function generate(){
-        var types = [];
-        for (let i=0; i<=10; i++){
-          if(document.getElementById("type_"+i).checked){
-            types.push(i);
-          }
-        }
-        var settings = [];
-        for (let i=0; i<=6; i++){
-          if(document.getElementById("setting_"+i).checked){
-            settings.push(i);
-          }
-        }
-        var showUnkTrigger = document.getElementById("allowUnrated").checked;
-        var minTrigger = document.getElementById("offenseSlider").value;
-        var showOffenseRating = document.getElementById("showOffenseRating").checked;
+				/**
+				 * Name | Type | Setting | trigger level | Description | Link
+				 *
+				 * Type:
+				 *  0 -> ?
+				 *  1 -> Trans MTF
+				 *  2 -> CD MTF
+				 *  3 -> Trans FTM
+				 *  4 -> CD FTM
+				 *  5 -> body swap
+				 *  6 -> body share
+				 *  7 -> mix gender
+				 *  8 -> Boy as magical girl
+				 *  9 -> both crossdress
+				 * 10 -> other MtF
+				 * 11 -> other FtM
+				 *
+				 * Setting:
+				 *  0 -> other
+				 *  1 -> "real life"
+				 *  2 -> fantasy (magic, etc)
+				 *  3 -> game (fantasy)
+				 *  4 -> dark ages (no magic)
+				 *  5 -> real life + magic
+				 *  6 -> game (dating sim)
+				 *
+				 * Trigger Level: how good is the representation (0 = uknown; 10 = good, 1 = worst)
+				 *
+				 * Link (multiple formats allowed, but only one at a time):
+				 *   null
+				 *   "https://a.com/183"
+				 *   ["https://a.com/hi","https://b.com/manga"]
+				 *
+				 *
+				 * please keep it in alphabetic order (it helps avoiding duplicates)
+				 */
+				var list = [
+					// # Name | Type | Setting | trigger level | Description | Link
+					["1/2 prince",3,3,0,"AFAB plays prince in a videogame","https://www.mangahub.io/manga/1-2-prince"],
+					["30-Sai Made Doutei De Itara Mahou Shoujo Ni Narimashita",8,5,0,"\"Comedy manga about magical girls who used to be old virgin guys!\" - manganato","https://readmanganato.com/manga-hg985341"],
+					// a Name | Type | Setting | trigger level | Description | Link
+					["a boy, that can't stop crossdressing",2,1,8,"Due to a misunderstanding his friend thinks he genderswapped","https://mangakakalot.com/manga/ob924682"],
+					["A Boy who Loves Genderswap got Genderswapped so He acts out His Ideal Genderswap Girl",1,1,8,"Just look at the title..","https://mangakakalot.com/read-vw0sz158524537112"],
+					["Adesugata Junjou Boy",2,1,0,"AMAB is raised as a girl due to a tradition in their theatre","https://myanimelist.net/manga.php?id=10006"],
+					["After school nightmare",7,0,0,"(Horror) an enby has to fight a nightmare","https://www.mangahere.cc/manga/after_school_nightmare/"],
+					["Ageha 100%",2,1,0,"[?] a classmate of the female MC is crossdressing to hide his identity","https://myanimelist.net/manga.php?id=2995"],
+					["Akane-chan Overdrive",1,1,0,"Reborn into a girl","https://mangakakalot.com/manga/akanechan_overdrive"],
+					["Ai no Shintairiku",2,1,0,"[?] dresses as girl to school and choose a female name (-> normal trans without operation? -- if  you read it tell me if its MtF)","https://myanimelist.net/manga.php?id=3166"],
+					["Ai Ore!",2,1,0,"[?] school, comedy, drama","https://myanimelist.net/manga.php?id=8771"],
+					["Ai wo Utau yori Ore ni Oborero!",9,1,0,"A AMAb and a AFAB both are crossdressing at their school","https://myanimelist.net/manga/2686/Ai_wo_Utau_Yori_Ore_ni_Oborero!"],
+					["akb49 renai kinshi jourei",2,1,0,"a crossdresser ends up in a female idol group","https://www.mangahere.cc/manga/akb49_renai_kinshi_jourei/"],
+					["Alice on deadlines",1,0,0,"A male shinigami takes over a girls body","https://www.mangahub.io/manga/alice-on-deadlines"],
+					["Alto",2,0,0,"In order to become a pilot AMAb crossdresses","https://myanimelist.net/manga.php?id=3488"],
+					["Amachin wa Jishou",2,1,0,"crossdress (likes to play with others based on it), school","https://myanimelist.net/manga/110892/Amachin_wa_Jishou_%E2%99%82"],
+					["a manga about a hero who pulled out the magic sword and became a girl",1,2,0,"..","https://manganato.com/manga-fh982442"],
+					["Amasuka 1637",4,0,0,"After timetravelling with a group of friends, the AFAB MC takes on the role as a male rebel leader","https://myanimelist.net/manga.php?id=4009"],
+					["Ame Nochi Hare",1,1,0,"A group of school AMAB end up being turned into girls","https://www.mangahub.io/manga/ame-nochi-hare"],
+					["Americano Exodus",2,2,0,"an AMAB has to hide his gender to survive, since hes a magician","https://mangakakalot.com/read-ch7rm158504977361"],
+					["Asuka Hybrid",1,1,0,"Asuka is accidentally moved into the girls dorm and a strange woman decides to fix it, by turning Asuka into a girl. It turns out asukas roommate is a guy. Asuka tries to find the woman in order to turn back.","https://myanimelist.net/manga.php?id=15943"],
+					["At Full Moon",7,0,0,"A vampire and a \"guy\", which transforms into a girl at full-moon search for a new place to live","https://myanimelist.net/manga.php?id=10974"],
+					// b Name | Type | Setting | trigger level | Description | Link
+					["bara no Kaitou",2,1,0,"[?] AMAB disguises as maid and recieves advances from the employer","https://myanimelist.net/manga.php?id=13961"],
+					["Basara",4,0,0,"[?] After her Brother (the \"boy of destiny\" - a hero) dies, she takes his place","https://myanimelist.net/manga.php?id=974"],
+					["Bijo, Tokidoki Yajuu",2,1,0,"[?] a AMAB allergic to girls bumbs into a crossdresser","https://myanimelist.net/manga.php?id=14659"],
+					["bishoujo ni natta kedo netoge haijin yattemasu",1,3,0,"A genderswapped AMAB flees into a game from it (with his new appearence)","https://mangakakalot.com/read-vb3xf158524569815"],
+					["Bitter: Nakechau Koi Monogatari",4,1,0,"Collection (Romance)","https://myanimelist.net/manga.php?id=5971"],
+					["Biyaku Cafe",4,1,0,"[?] \"The popular oneshot “Aphrodisiac Café” has now begun serialization as a series! This time the heroine is a regular customer at the Aphrodisiac Café, Megu. Everyday she takes the time to put on makeup, but the reason for that is… What kind of tea would be suitable for a troubled maiden?\" - StarryHeaven","https://myanimelist.net/manga.php?id=11522"],
+					["Blue Wars",2,1,0,"A AMAB wants to become a girl (but the magic-wish isn't (yet) fulfilled). She wants to make another AMAB fall in love","https://myanimelist.net/manga.php?id=1663"],
+					["Body Jack",6,1,0,"[w Anime] a scientist lets an AMAB \"slip into\" a girls body (ecchi)","https://myanimelist.net/anime.php?id=4149"],
+					["boku girl",1,1,0,"A AMAB transforms after beeing confessed to.","https://mangaread.co/manga/boku-girl/"],
+					["Boku ni Natta Watashi",4,1,0,"AFAB MC is thrown out of her home, put into an all-boys-school with a roommate she dislikes.","https://myanimelist.net/manga.php?id=606"],
+					["boku no shotaiken",1,1,0,"Revived by a scientist as his wife","https://www.mangahub.io/manga/boku-no-shotaiken"],
+					["boku to boku",2,1,0,"Multiple crossdressers at a school","https://www.mangahere.cc/manga/boku_to_boku/"],
+					["Boku wa ne",2,1,0,"[?] shoujo, drama","https://myanimelist.net/manga.php?id=4582"],
+					["boku wo mari no naka",1,1,5,"a hikikomori wakes up as his crush","https://www.mangahub.io/manga/boku-wa-mari-no-naka"],
+					["Boku x Kano",2,1,0,"AMABs sister makes him crossdress-cosplay and a girl falls in love with the cosplay","https://myanimelist.net/manga.php?id=14678"],
+					["Boyfriend",2,1,0,"[?] a chieldhood friend comes back from america and is nothing like back then (BL, drama)","https://myanimelist.net/manga.php?id=2610"],
+					["boy of the female wolf",4,0,0,"[havn't read it yet] tags: comedy, romance, shojo, harem",["https://www.mangahere.cc/manga/boy_of_the_female_wolf/","https://myanimelist.net/manga.php?id=16761"]],
+					["Boy Princess",2,1,0,"a princess bride elopes and the family sends in the brother instead","https://myanimelist.net/manga.php?id=837"],
+					["bro girl",1,1,0,"His friend turns into a girl for a year (Comedy / slice of life)","https://mangakakalot.com/manga/lr920163"],
+					["Broken Angels",4,0,0,"A AFAB dresses as boy and can control water.",["https://myanimelist.net/manga.php?id=402","https://en.wikipedia.org/wiki/Broken_Angels_(manga)"]],
+					["Broken Blood",8,1,0,"[?] in the past an alchimist injects himself with a witch-making serum. Now a AMAB is a magical girl","https://myanimelist.net/manga.php?id=11269"],
+					["Butterfly",2,1,0,"[?] a AMAB is paid by an elementary school girl to wipe out all ghosts","https://myanimelist.net/manga.php?id=1979"],
+					// c Name | Type | Setting | trigger level | Description | Link
+					["Charisma Doll",4,1,0,"AFAB MC is \"the new top singer\" (whoose gender is unknown) unknown to the classmates, which has been dumped by the boyfriend.","https://myanimelist.net/manga.php?id=1341"],
+					["chichi ga loli na mono de",1,1,0,"A lolicons father turns into a loli","https://mangakakalot.com/manga/chichi_ga_loli_na_mono_de"],
+					["Chirality",7,0,0,"[not read yet -> idk why GB] A technovirus turns people into cyborgs","https://www.mangahub.io/manga/chirality"],
+					["Cinderella Boy",6,1,0,"[w Anime] [?] two detectives swap body (according to someone primarly body-share, not swap, but never seen it) (Hard to find)","https://myanimelist.net/anime.php?id=301"],
+					["Claudine..!",11,1,0,"[?] Claudine was born into the wrong gender. Not everyone accepts it.","https://myanimelist.net/manga.php?id=1249"],
+					["Click",1,1,0,"MC turns into a girl with 16 mid highschool (Tradegy, shoujo, romance)","https://www.mangahere.cc/manga/click/"],
+					["Cross days",2,1,0,"School days with crossdressing (and less yandere)","https://myanimelist.net/manga/23438/Cross_Days"],
+					["Cute x Guy",3,1,0,"MC takes expirimental medicine and ends up as a boy (BL, Comedy, School)","https://bato.to/series/11080/cutexguy"],
+					// d Name | Type | Setting | trigger level | Description | Link
+					["Danshi Kinshi!!",2,1,0,"After becoming a student council member at her all girls school the mc finds out: the president is crossdressing","https://myanimelist.net/manga.php?id=7939"],
+					["Darenimo Ienai!",2,1,0,"\"Akane has a crush on the princely Yuu, but when she finds out he's living with super attractive Kei, she makes a deal with the other girl to move out of Yuu's house. But Kei insists on moving in with Akane, and is now running her ragged with demands! Will Akane get any chance with Yuu or will all her time be spent with Kei?\" - Manga Fox","https://myanimelist.net/manga.php?id=13024"],
+					["Days of cool idols",2,1,0,"The academy's headmaster assigns AMAB mc to be a substitute for a female idol","https://myanimelist.net/manga.php?id=14388"],
+					["Divine Melody",7,0,0,"[?] a fox demon is saved by two childs and pays the debt back 200 years later as a man","http://www.mangahere.cc/manga/divine_melody/"],
+					["Dog style",1,1,0,"A collection. Aizen: wants a girlfriend and due to a poor formulated wish ends up as a girl","https://myanimelist.net/manga/10268/Dog_Style"],
+					["Dou Danjo",5,1,0,"A tomboy and a boy swap bodies","https://myanimelist.net/manga/7402/Dou_Danjo"],
+					["Dragon Pearl Boy",2,1,0,"\"The crown prince of dragon clan from the deep blue sea comes to the human world to look for his bride. But he doesn't know that his bride is a twin...\" - Cinderella Story","https://myanimelist.net/manga.php?id=9066"],
+					// e Name | Type | Setting | trigger level | Description | Link
+					["Eiyuu No Musume To Shite Umarekawatta Eiyuu Wa Futatabi Eiyuu O Mezasu",1,2,0,"A AMAB hero is eincarnated as a daughter of fellow comrades (ecchi)","https://manga68.net/manga/eiyuu-no-musume-to-shite-umarekawatta-eiyuu-wa-futatabi-eiyuu-o-mezasu/"],
+					// f Name | Type | Setting | trigger level | Description | Link
+					["F Combo",9,1,0,"After moving in with his uncle, aunt and cousin he notices aunt and uncle are both not dressing cis and he dosnt know about his \"cousin\"","https://myanimelist.net/manga.php?id=1669"],
+					["Fudanshism",2,1,0,"A AMAB is asked to substitute for his sister at as attendant. there he meets a AFAB classmate and has to keep crossdressing in order to see her","https://myanimelist.net/manga.php?id=13459"],
+					["Fukigen cinderella",7,1,0,"An AMAB keeps cycling gender","https://mangahub.io/manga/fukigen-cinderella"],
+					["Full moon no sasayaite",1,2,0,"A vampire/werewolf turns into a girl and tries to hide it","https://www.mangahere.cc/manga/full_moon_ni_sasayaite/"],
+					["Futaba-kun Change",1,1,0,"AMAB switches gender if excited or stressed (romance, ecchi, pretty old)","https://www.mangahere.cc/manga/futaba_kun_change/"],
+					// g Name | Type | Setting | trigger level | Description | Link
+					["Giniro no Genders",2,1,0,"crossdresser posts his pictures online, gets support and ends up going out as a girl","https://www.mangahere.cc/manga/giniro_no_genders/"],
+					["Global Garden",4,0,0,"[?] Prof. Einstein sends two future-seeing boys in order to find a wish granting AFAB, which lives as a boy","https://myanimelist.net/manga.php?id=1535"],
+					["Gold Rush 21",4,1,0,"[?] \"Due to some unusual circumstances, Yutaka, a popular university students, often called a miser, raised by his strong sister, is an acquaintance of Rika, the owner of a host club. And then he meets Ritsu, the number 1 host at that club, and Kirishima, a lawyer who’s also a customer who adores Ritsu…?!\" - MAL","https://myanimelist.net/manga.php?id=9204"],
+					["Goshujinsama ni Ki wo Tsukete",2,1,0,"A BL gender bend school collection","https://myanimelist.net/manga.php?id=8416"],
+					["Guignol Kyuutei Gakudan",2,1,0,"[?] An Orchestra has \"doll-like zombies\" as audience.","https://myanimelist.net/manga.php?id=9268"],
+					// h Name | Type | Setting | trigger level | Description | Link
+					["Hakadate Youjin Buraichou Himegami",4,0,0,"\"Hyou, a 15-year-old girl has been fighting the youjin alone up until now under the guise of the master samurai Miburo... One evening, as Hyou was fighting for her life, she was saved by a noble, beautiful fighter, Himegami. Their meeting would affect each of their destiny. And now, the hidden truth behind history is going to start!\" - MAL","https://myanimelist.net/manga.php?id=9895"],
+					["Hana no Kishi",0,0,0,"[?] After the older brother died AFAB wants to become a knight","https://www.mangahub.io/manga/hana-no-kishi"],
+					["Hanaukyo Maid Tai",0,1,0,"[?] a orphan arrives in his grandfathers mansion, which is filled with maids","https://mangakakalot.com/read-ge2zs158524523664"],
+					["Hanazakari no Kimitachi e",4,1,0,"Track and Field star Mizuki transferred to an all boys school in order to get closer to her idol )drama, romance, harem)","https://myanimelist.net/manga.php?id=57"],
+					["Heavens Will",2,1,0,"A girl, which can see ghosts and therefore has a lot of unwelcome visitors gets help from a crossdressing exorcist","https://myanimelist.net/manga.php?id=4832"],
+					["he is a magical girl",8,5,0,"Short romance between Magical Girl Boy and his Friend","https://mangakakalot.com/manga/fo924386"],
+					["He's dedicated to Roses",4,1,0,"\"Plain when she's a girl, but disguised as a guy, she's got a good body, is awesome at fighting and has a handsome face. Despite thinking that Ida is a guy, Kang Naru falls in love with her. Now everyone thinks that Naru is gay, Ida wants to tell him the truth.\" - MAL","https://myanimelist.net/manga.php?id=13171"],
+					["Himitsu no Hanazono",4,0,0,"After seeing her love at first sight a second time the mc notices its actually a girl (Yuri)","https://myanimelist.net/manga.php?id=4451"],
+					["Himegimi no Tsukurikata",4,0,0,"[?] After loosing her mother maria is told by 2 butler: her dad is dying and she has to start a princess training","https://myanimelist.net/manga.php?id=7457"],
+					["Honey 2 Skip",2,1,0,"After loosing contact for a long time the AMAB sibling of the AMAB mc comes back dressed as a girl","https://myanimelist.net/manga.php?id=1078"],
+					["Houou Gakuen MiSoRA-gumi",4,1,0,"A AFAB has to go to an all-boys-school (Romance)","https://myanimelist.net/manga.php?id=10657"],
+					["Hourou Musuko",9,1,0,"Shuuichi (m) is mistaken for his sister on his first day of school and sits next to a \"boyish girl\"","https://myanimelist.net/manga.php?id=585"],
+					["House Gakuen Misoragumi",4,1,0,"A lesbian gets enrolled in a all boys school","https://www.mangahub.io/manga/houou-gakuen-misoragumi"],
+					["Hush",9,1,0,"A boyish AFAB loves a AMAB idol, which transfers to her school and crossdresses to hide the identity","https://myanimelist.net/manga.php?id=2698"],
+					["Hybrid Berry",4,1,0,"\"Aoyagi, a gardening otaku joins the school baseball to get the attention of the guy she likes... But what happens when they have to compete over the same position in the team?\" - MAL","https://myanimelist.net/manga.php?id=10636"],
+					// i Name | Type | Setting | trigger level | Description | Link
+					["i am a killer maid",0,1,0,"\"This is the story of a mangaka, a killer maid, and body swapping ramen, with a side of gratuitous violence and explosions.\" - 1stkissmanga","https://1stkissmanga.io/manga/i-am-a-killer-maid/"],
+					["i am my wife",1,1,0,"AMAB turns into girl and falls in love with his male copy","https://www.mangahub.io/manga/i-am-my-wife"],
+					["i am not a goddess",1,3,0,"A AMAB turns into a OP woman uppon entering a game. (connection real world - game world; somewhat magical girl vibes; ecchi)","https://m.manganelo.com/manga-dv117767"],
+					["i am worried that my childhood friend is too cute",1,1,0,"Ecchi Romance Comedy","https://readmanganato.com/manga-hu984929"],
+					["Ichigo Channel",4,1,0,"AFAB mc crossdresses as member of brothers idol group. While outside as female she meets a man, whic knows the other identity as well and falls in love.","https://myanimelist.net/manga.php?id=1523"],
+					["ichinensei ni nacchattara",1,1,0,"Revived as elementary school girl","https://www.mangahere.cc/manga/ichinensei_ni_nacchattara/"],
+					["Idol Paradise",4,1,0,"Minori is often mistaken for a male idol. After helping in an unfair fight, she notices it was a filmset she stumbled into.","https://myanimelist.net/manga.php?id=4723"],
+					["i dont really get it, but it seems i reincarnatrd in another world",1,2,0,"Magic Isekai","https://readmanganato.com/manga-gy983607"],
+					["i girl",9,1,0,"Adult siblings crossdress as each other (JOSEI (not shojo))","https://myanimelist.net/manga/61727"],
+					["i my me! strawberry eggs",2,1,0,"AMAB crossdresses to get a job as a teacher","https://myanimelist.net/anime.php?id=509"],
+					["Imitation Love",4,1,0,"In order to be close to an actor AAFB takes her brothers job.","https://myanimelist.net/manga.php?id=5154"],
+					["Ingenuo",4,1,0,"In order to apply for a photographer-job Jiayu crossdresses","https://myanimelist.net/manga.php?id=2692"],
+					["its not as if i wanted to dress like a woman",2,1,8,"A man ends up crossdressing for a job. (romance (bl), CD ally)","https://www.mangahub.io/manga/it-s-not-as-if-i-wanted-to-dress-like-a-woman"],
+					["i turned into a farm girl after i got reincarnated",1,0,0,"look at the title.. (comedy)","https://mangakakalot.com/read-qk6fy158524473762"],
+					["i who blocked the demon kings ultimate attack ended up as the little heros nanny",0,2,0,"[?] (magic, comedy, action)","https://mangakakalot.com/manga/xf923896"],
+					// j Name | Type | Setting | trigger level | Description | Link
+					["Jinzou Shoujo",1,1,0,"a scientist revives a boy in the body of a girl (Horror, Drama, Mystery)","https://myanimelist.net/manga/5479/Jinzou_Shoujo"],
+					["jo-yo life",1,1,0,"Wakes up as loli","https://mangakakalot.com/manga/mh923988"],
+					["jun ai sensation",6,1,0,"A AMABs spirit posesses a girls body (romance, comedy, did-similar)","https://www.mangahub.io/manga/jun-ai-sensation"],
+					// k Name | Type | Setting | trigger level | Description | Link
+					["K2: Kill me kiss me",9,1,0,"Tae switches schools with her identical cousin in order to be closer to an idol. (according to sources mtf and ftm crossdressing)","https://myanimelist.net/manga.php?id=391"],
+					["Kadamono Damono",7,1,0,"Haruki turns into a girl at night; sport; romance","https://myanimelist.net/manga.php?id=389"],
+					["Kagayaku Otoko no Ko Juku",2,1,0,"To get a manga apprenticeship a AMAB has to crossdress","https://myanimelist.net/manga/46134"],
+					["kakumei no hi",1,1,0,"A delinquent turns into a girl and his friends are interrested in them","https://www.mangahub.io/manga/kakumei-no-hi"],
+					["Kämpfer",8,5,4,"[w Anime] AMAB is selected to some sort of hunger-games without area restriction and has a female fighting form (romance, comedy, later ecchi)","https://myanimelist.net/anime/6205"],
+					["Kanojo ni naru hi",1,1,0,"One of two always competing childhood-friend AMABs turns female","https://myanimelist.net/manga/54817"],
+					["Kashimashi: Girl meets Girl",1,1,9,"[w Anime] An alien revives a AMAB as a Girl after accidentally killing him. (Romance)","https://myanimelist.net/anime/667"],
+					["Kasou Genjitsu Renairon",2,1,0,"\"Ever since he was a child, Ryou has always looked very feminine. One day, a couple of girls from his class force him to put on make-up and to wear a girl's uniform. While he was walking around, he meets Kazuaki, who immediately takes interest in him and simply refuses to believe that Ryou is actually a boy.\" - Hanashi Scanlations","https://myanimelist.net/manga.php?id=2208"],
+					["kenja no deshi na nonuru kenja",1,3,7,"The MC's ingame OP Character turns into a loli","https://mangakakalot.com/read-xc0ux158504848745"],
+					["Kimi to Himitsu no Hanazono",0,1,0,"MC was raised as a boy and now decides to be a girl in an all-girls-school. Her roommate is practicing acting as a girl in order to take over the family buismess","https://myanimelist.net/manga.php?id=8025"],
+					["kimoOta, idol yarutteyo",1,1,0,"An idol turns into a girl (comedy slice of life)","https://mangakakalot.com/read-hw0rs158524507062"],
+					["Kira Kira labyrinth",2,0,0,"After beeing bullied the female MC goes to an all-girls school. With her AMAB roommate they want to find out if roommates sister really suicided (romance. mystery, drama)","https://myanimelist.net/manga.php?id=4476"],
+					["Kore wa Zombie Desu ka?",8,0,0,"[w Anime] a zombie boy ends up as a magical girl, while serving a witch","https://myanimelist.net/anime/8841"],
+					["Kunisaki Izumo no Jijou",0,1,0,"A AMAB is often mistaken as a girl.",["https://www.mangahere.cc/manga/kunisaki_izumo_no_jijou/","https://myanimelist.net/manga.php?id=13406"]],
+					["Kyou kara Onnanoko!?",2,1,0,"\"After Yuzu's parent's job transfer she moved in with her cousins. Unknowing to her, one of her cousins isn't who she seems to be.\" - MAL","https://myanimelist.net/manga.php?id=15678"],
+					// l Name | Type | Setting | trigger level | Description | Link
+					["Lady Beast",5,4,0,"an arranged marriage ends in a body swap","https://1stkissmanga.io/manga/lady-beast/"],
+					["Le Chedalier D'Eon",2,0,0,"[w Anime] \"A mysterious cult is sacrificing beautiful young women to a demonic force that has promised them the kingdom of France in return for the blood of their victims. Only one man can save Paris from chaos and terror: the Chevalier d’Eon!\" - Del Rey",["https://myanimelist.net/anime/1013/","https://myanimelist.net/manga/222/Le_Chevalier_dEon"]],
+					["Legend of Basara",4,0,0,"[w Anime] [?] Adventure, Drama, Romance","https://myanimelist.net/anime.php?id=633"],
+					["Love in the Mask",4,1,0,"A AFAB becomes a crossdressing bodyguard","https://www.mangahere.cc/manga/love_in_the_mask/"],
+					// m Name | Type | Setting | trigger level | Description | Link
+					["Mai Otome Arashi",9,0,0,"[ECCHI HAREM] \"A sequel to Mai Otome,which introduces Archduke Nagi's younger sister. Who is disguised as a man. Arashi (Nagi's sister) has bought Garderobe and all of its properties. The story starts from there.\" - MAL","https://myanimelist.net/manga.php?id=1254"],
+					["Majosama to kyoudai",1,5,0,"Oneshot: two brothers get taken in by a witch and then turned into girl in order to select one of them as her successor","https://mangakakalot.com/manga/ar919733"],
+					["Mana Senpai's Request",1,1,0,"AMABs crush agrees to go out if AMAB turns female (Ecchi, yuri)","https://ww.mangakakalot.tv/manga/manga-gx983606"],
+					["Magical Trans",8,5,0,"A school-boy joins a Magical Girl club and ends up as one","https://www.mangahere.cc/manga/magical_trans/"],
+					["Mai Otome",2,0,0,"AMAB trasnfers to all girls school, followed by assasins.","https://myanimelist.net/manga.php?id=1069"],
+					["Maria Holic",2,1,0,"[w Anime] A lesbian girl visits a Catholic School and has a AMAB crossdresser as roommate","https://myanimelist.net/anime.php?id=5030"],
+					["Marugoto Anju Gakuen",2,0,0,"human AMAB in all-girls demon school","https://myanimelist.net/manga.php?id=4833"],
+					["Mayo Chiki",2,1,0,"[w Anime] A AMAB sidecharacter crossdresses as butler all the time and sometimes others as well (school, comedy)","https://myanimelist.net/anime/10110"],
+					["Mei chan no shitsuji",2,1,0,"[?] an AMAB follows the MC into all-girls school (romance)","https://manga68.net/manga/mei-chan-no-shitsuji/"],
+					["Metamo Kiss",5,1,0,"MC can switch bodies with his crush (and her crush (his brother) can undo it with a kiss)","https://www.mangahub.io/manga/metamo-kiss_118"],
+					["Mikazuki mao cant choose a gender",3,1,0,"FTM Romance with Roommate","https://mangakakalot.com/manga/vg925531"],
+					["Mily Boy",4,1,0,"A AFAB ends up as a male model","https://myanimelist.net/manga.php?id=13243"],
+					["Minami ke",2,1,0,"[w Anime] In order to get closer to his crush a boy keeps crossdressing. (slice of life, pretty long)","https://myanimelist.net/anime/2963"],
+					["Mint no Bakura",2,1,0,"For some reasons AMAB is only able to enreoll as girl at his twinsisters school","https://myanimelist.net/manga.php?id=1006"],
+					["Mizuho Ambivalence",2,1,0,"\"Tashiro Mizuho is your typical middle school teen... except for the fact that he is a cross-dresser! When an upper-classman's sister transfers into his class after living abroad, what awaits Mizuho in the future?\" - Hells_Castle","https://myanimelist.net/manga.php?id=13807"],
+					["My Barbaric Girlfriend",5,1,0,"A rude AFAB and a effeminate AMAB switch bodies","https://www.mangahere.cc/manga/my_barbaric_girlfriend/"],
+					["My Boyfriend is a Vampire",1,5,0,"AMAB turns into a girl after beeing bitten by a vampire (BL, school, comedy)","https://www.mangahub.io/manga/my-boyfriend-is-a-vampire"],
+					["My Brothers Body is too useful",5,1,0,"Siblings are body-swapped in order to help the other one build a relationship with their crush","https://1stkissmanga.io/manga/my-brothers-body-is-too-useful/"],
+					["My DNA Girlfriend",0,1,0,"He wakes up with a female version of himself next to him","https://www.mangahere.cc/manga/my_d_n_a_girlfriend/"],
+					["My Lady and I",2,1,0,"A boy crossdresses as a maid (comedy, romance)","https://manhuascan.com/manga-my-lady-and-i-.html"],
+					["My Lolita Brother",1,1,0,"Two AMAB siblings wish each other to turn into a girl, and it happens","https://mangakakalot.com/read-up1tr158504928134"],
+					["My Wife is a Man",2,1,0,"Daily life of a gay relationship with a crossdresser","https://www.mangahub.io/manga/my-wife-is-a-man"],
+					// n Name | Type | Setting | trigger level | Description | Link
+					["National School Prince is a Girl",0,0,0,"AMAB reincarnates as Girl and disguises as a man, while reigning in a game world","https://1stkissmanga.io/manga/national-school-prince-is-a-girl/"],
+					["Nephilim",7,0,0,"Nephilim are a species, which is male at day and female at night. And a \"Playboy\" falls in love with one","https://myanimelist.net/manga.php?id=3496"],
+					["neta chara tensei so ka anmari da",1,2,0,"Isekai in game-world as own op character","https://mangaowl.net/single/63231/neta-chara-tensei-to-ka-anmari-da-"],
+					["Never give Up!",4,1,0,"Two childhood-friends fall in love, but their families disapprove since each of them looks to androgynous. AFAB mc decides to become a \"male\" model","https://myanimelist.net/manga.php?id=103"],
+					["Nicoichi",2,1,0,"AMAB plays mother for his stepson at home and salary-man at work","https://myanimelist.net/manga.php?id=5469"],
+					["Ningyo Ouji",7,0,0,"[ECCHI?] 3 shorts: romance, comedy, supernatural","https://myanimelist.net/manga.php?id=3957"],
+					["No Bra",2,1,0,"[?] \"Masato is living on his own, but this soon changes. Nomura Yuki, a childhood friend, is coming to live with him. What could be better than having a beautiful girl living under his roof? It sounds great, but he'll soon find out Yuki's secret...\" - MAL (ECCHI)","https://myanimelist.net/manga.php?id=998"],
+					["No Good!",2,1,0,"BL Oneshot-Collection","https://myanimelist.net/manga.php?id=11168"],
+					["Nononono",4,1,0,"Since woman olympic skii jumping dosnt exist AFAB mc takes part in them as twin-brother Yuuta.","https://myanimelist.net/manga.php?id=12450"],
+					["No Side",1,1,0,"A AMAB dies during a rugby match and posesses a girl ","https://www.mangahub.io/manga/no-side"],
+					["Nousatsu Junkie",2,1,0,"[?] AFAB MC is a model, her rival has a secret","https://myanimelist.net/manga.php?id=164"],
+					// o Name | Type | Setting | trigger level | Description | Link
+					["O-Guts!",2,1,0,"[?][Trigger Warning: maybe Child abuse (mentioned in MAL description, no idea)] In order to cure his allergy to girls, his sister makes him join a idol-groups fanclub (BL, Comedy)","https://myanimelist.net/manga.php?id=8369"],
+					["Oh no i swapped bodies with an anti fan",5,1,0,"An AMAB idol and a AFAB anti-fan (which is a fan of a fellow idol-group member) swap bodies and have to keep each others lifes afloat (romance, comedy)","https://1stkissmanga.io/manga/oh-no-ive-swapped-bodies-with-an-anti-fan/"],
+					["Oira Sukeban",2,1,0,"[w Anime] Boy in all-girls-school","https://myanimelist.net/anime/2790"],
+					["Okaeri Alice",0,1,0,"[?] tags: drama, gb, school, shounen","https://mangakakalot.com/manga/vm922794"],
+					["Okama Hakusho",2,1,0,"A crossdressing AMAB works at a \"transvestite bar\ and ends up befriending with a girl (which thinks AMAB is female). Also she has a boyfriend","https://myanimelist.net/manga.php?id=6292"],
+					["Oneechan ga Mamotte Ageru",2,1,0,"Two Brothers end up as crossdressing idols","https://myanimelist.net/manga/45249"],
+					["onii-chan is done for",1,1,7,"His younger sister turns him into her little sister (slice of life)",["https://mangakakalot.com/read-zf5tb158504876104","https://www.reddit.com/r/MyBrotherIsDoneFor"]],
+					["Only Sense Online",1,3,8,"Due to a bug a feminine AMAB plays a girl in a game","https://myanimelist.net/manga/70795"],
+					["Ore alice danjo gyakuten",5,2,0,"A AMAb reincarnates into Alice in the wonderland and swaps bodies with her on arrival","https://bato.to/series/38645/ore-alice-danjo-gyakuten"],
+					["Ore twintail ni narimasu",8,5,0,"[w Anime] A boy ends up as a Magical Girl (Comedy, Romance?)","https://myanimelist.net/anime/24705"],
+					["Otogizoushi",4,0,0,"[w Anime] The sister of a famous samurai has to cover up for him","https://myanimelist.net/anime.php?id=525"],
+					["Otome no Ihora!",5,1,0,"Siblings (a tomboy and a girlish boy) swap bodies before changing schools","https://chap.manganelo.com/manga-jk94678"],
+					["Otoke no Musume days",2,1,0,"Multiple AMAB crossdress together","https://mangakakalot.com/manga/otoko_no_musume_days"],
+					["Otome wa Boku ni Koishiteru",2,1,0,"[w Anime] AMABs grandfathers last wish is for him to visit an all girls school (romance, comedy)","https://myanimelist.net/anime.php?id=1569"],
+					["Otome wa Oneesama No Koishiteru",2,1,0,"A AMAB crossdresses in a All-Girls school","https://ww.mangakakalot.tv/manga/manga-vo972497"],
+					["Oto Koi",2,1,0,"Collection of crossdressing BL","https://myanimelist.net/manga/57081"],
+					["Oto x Maho",8,0,0,"After his mom forcess him to become a magical girl, he has to do the job with a perverted cat as partner","https://myanimelist.net/manga.php?id=8016"],
+					["Ouran Koukou Host Club",4,1,0,"Due to a debt AFAB has to work at a male host club","https://myanimelist.net/anime.php?id=853"],
+					// p Name | Type | Setting | trigger level | Description | Link
+					["Pai Long",2,1,0,"[?] a almost emotionless agent meets a young girl (slice of life, adventure, action)","https://myanimelist.net/manga.php?id=1901"],
+					["Penguin Kakumei",9,1,0,"[?] (comedy, romance, \"talents\", shoujo)","https://myanimelist.net/manga.php?id=926"],
+					["Power!!",4,1,0,"In order to let AFAB mc join the basketball-team the father enrolled mc as a boy.","https://myanimelist.net/manga.php?id=483"],
+					["Pretty face",0,1,0,"After an accident AMABs face is restore on basis of a picture of his female crush","https://www.mangahere.cc/manga/pretty_face/"],
+					["Princess Princess",2,1,0,"[w Anime] An all-boys school has a tradition of letting a few AMABs crossdress every year","https://myanimelist.net/anime/907"],
+					["Princess is not a Boy",0,0,0,"[?] a human has the ability to let demons change their gender","https://1stkissmanga.io/manga/princess-is-not-a-boy/"],
+					["Prunus Girl",2,1,0,"[?] school, gb, romance, mystery, comedy",["https://myanimelist.net/manga.php?id=14115","http://www.mangahere.cc/manga/prunus_girl/"]],
+					// q Name | Type | Setting | trigger level | Description | Link
+					// r Name | Type | Setting | trigger level | Description | Link
+					["Ranma 1/2",7,1,4,"AMAB switches gender depending on the temperature of the water he last touched (romance, fighting, due to its age its somewhat offensive)","https://myanimelist.net/anime.php?id=210"],
+					["Return",1,1,0,"A AMAB dies and posesses a girl to go back to his school (romance, opmedy)","https://www.mangahere.cc/manga/return/"],
+					["reversible",2,1,0,"All Boys school, which makes some students crossdress","https://www.mangahere.cc/manga/reversible/"],
+					["Ribbon no Kishi",4,1,0,"[w Anime] a AFAB is raised as a prince, but others want to expose it","https://myanimelist.net/anime.php?id=3024"],
+					["Ruby Doll",4,1,0,"\The president of the huge family company DI-group is going to select his heir from among his four grandsons, that's why Ru Jin, Ru Ha, Ru Min and Ru Sung gathered together!! Of course, everyone has his own reasons to become the next president... So the survival game of this coveted seat in the executive suite is going to START!!\" - MAL","https://myanimelist.net/manga.php?id=12346"],
+					// s Name | Type | Setting | trigger level | Description | Link
+					["Sarasah",4,0,0,"[?] AFAB mc's crush hates mc. \"Touched by her passion, the keepers send Ji-Hae to her past life to mend the rift between her former self and Seung-Hyu. But can Ji-Hae keep up the act long enough to find Seung-Hyu and set things right?\" - MAL","https://myanimelist.net/manga.php?id=9615"],
+					["Savage Garden",4,0,0,"A orphan girl befriends with a boy and has to take his place at an noblemens all-boys-school","https://myanimelist.net/manga.php?id=12633"],
+					["Saver",4,0,0,"After learning her crush is her half-sibling she runs away into a body of water and ends up in a kingdom, whichs only hope is her","https://myanimelist.net/manga.php?id=514"],
+					["Sekainohate de aimashou",1,1,0,"An alien chooses an AMAB as his wife","https://www.mangahub.io/manga/sekainohate-de-aimashou"],
+					["Skirt",2,1,0,"A short oneshot","https://myanimelist.net/manga/33945"],
+					["Shinobi no Onna",9,0,0,"[?] a collection (mystery, fantasy, drama, romance, historical)","https://myanimelist.net/manga.php?id=3182"],
+					["Shinobi yoru wa kusemono",0,0,0,"[?] school comedy, romance","https://www.mangahub.io/manga/shinobi-yoru-koi-wa-kusemono"],
+					["Shoujo shounen",2,1,0,"Collection of stories of AMABs ending up as crossdressing idols","https://w12.mangafreak.net/Manga/Shoujo_Shounen"],
+					["Shounen Linda",8,0,0,"[?] short about a boy, which transforms into a girl to save the world","https://myanimelist.net/manga.php?id=5978"],
+					["Shounen Maid",2,1,0,"An orphan ends up as his grandfathers maid","https://myanimelist.net/anime/32175"],
+					["Shounen Princess",2,0,0,"Father forcess AMAB to marry princess","https://myanimelist.net/manga/80523"],
+					["Shounen Oujo yukihiro utako",2,4,8,"A boy ends up as double of a princess","http://readmangafox.xyz/manga/shounen-oujo-yukihiro-utako"],
+					["Shouri no Akuma",2,1,0,"At her new school the mc befriends with Akira (AMAB, but female appearence), which seems to have the whole school under control","https://myanimelist.net/manga.php?id=13107"],
+					["spill it, cocktail nights",4,5,0,"The MC's friend is a crossdressing (female) magical Girl (romance)","https://mangakakalot.com/manga/ek926071"],
+					["Star Project Chiro",4,1,0,"\"Eun-Yo Song has beauty, popularity – everything a girl could want! After a chance encounter with pop-singer Nan Lee, Eun-Yo finds herself getting caught up in the world of super stardom. But little does she know that Nan Lee has plans of his own for her…and she’s about to fall into his trap!\" - MAL","https://myanimelist.net/manga.php?id=3890"],
+					["Stop!! Hibari-kun!",2,1,0,"[w Anime] An Orphan moves into a new home and one \"daughter\" is a crossdressing boy, which \"can't keep his hands off our hero\"","https://myanimelist.net/anime.php?id=3332"],
+					["Strange mansion",1,1,0,"[forgot since its been a while - i think it was a crossdressing neighbour]","https://myanimelist.net/manga/12293"],
+					// t Name | Type | Setting | trigger level | Description | Link
+					["tadashi wo ore na heroine toshite",1,6,4,"dating sim isekai","https://mangakakalot.com/read-ni5gp158524507166"],
+					["Taiken",2,1,0,"[?] romance Oneshot-Collection","https://myanimelist.net/manga.php?id=10658"],
+					["tensei pandemic",0,1,0,"[?], ecchi, MC AMAB, comedy","https://www.mangahere.cc/manga/tensei_pandemic/"],
+					["Tensei shitara Ore ga Heroine de Aitsu ga Yuusha Datta",1,2,0,"Isekai as Hroine while friend is Hero (Romance, Adventure)",["https://myanimelist.net/manga/127834","https://mangakakalot.com/manga/xi923155"]],
+					["tensei na konamaiki",1,1,0,"[w Anime] a geneie turns AMAB into a girl. (high school, hard to find)","https://myanimelist.net/anime.php?id=200"],
+					["Tenshi ja Nai!!",2,1,0,"famous female MC joins an all-girls school and has a famous crossdressing idol as roommate","https://myanimelist.net/manga.php?id=820"],
+					["Teppen!",4,1,0,"While searching for AFAB mc's brother mc bumps into a idol and is forced to audition as male idol and passes","https://myanimelist.net/manga.php?id=10776"],
+					["tetsuan Birdy",6,0,0,"[w Anime] A AMAB ends up sharing a (appearence changing) body with a female space cop (there are 2 anime adaptations with diffrent stories, but id recommend the decode as first one)","https://myanimelist.net/anime/3974"],
+					["The Change",0,0,0,"The 2 (opposing gender) children of a noble both wish to be the oppsite gender and therefore are raised and dressed in such a way","https://myanimelist.net/manga.php?id=8837"],
+					["the moment when a fox becomes a wolf",5,1,0,"A AFAB, whose crush fell in love with the sister, and a \"average typical\" AMAB switch bodies","https://www.mangahub.io/manga/the-moment-when-a-fox-becomes-a-wolf"],
+					["the reincarnated vampire wants an afternoon nap",1,2,0,"Reincarnated as a OP female vampire (only low focus on GB)","https://myanimelist.net/manga/101192"],
+					["The Story of How My Best Friend and the Person I like Changed Bodies",5,1,0,"oneshot","https://mangamiso.net/manga/the-story-of-how-my-best-friend-and-the-person-i-like-changed-bodies"],
+					["Tokyo Crazy Paradise",4,0,0,"2020 tokyo is a bad place to be for women due to crimes. This causes the mc's parents to raise mc as a boy. after the parents die mc can no longer become a policeman and instead work as bodyguard for a yakuza classmate to survive","https://myanimelist.net/manga.php?id=762"],
+					["Tomodachi kara Yoroshiku desu!",3,1,0,"After wishing to be with her popular crush jun turns into a boy","https://myanimelist.net/manga.php?id=3845"],
+					["Trans Trans",0,3,0,"A AFAB and AMAB both play not AGAB characters in a game and end up falling in love, while strange things happen ingame and in real-life","https://myanimelist.net/manga/61561"],
+					["Tsukushite Agemasu",2,1,0,"MCs AMAB classmate works as maid at his fathers cafe","https://myanimelist.net/manga.php?id=6390"],
+					// u Name | Type | Setting | trigger level | Description | Link
+					["unparalleled memori kun",1,1,0,"(comedy)","https://mangakakalot.com/manga/ny924840"],
+					["Usotsuki Lily",2,1,0,"a girl which hates men gets asked out by  a crossdresser","https://www.mangahub.io/manga/usotsuki-lily"],
+					["Uwasa no Midori-kun!!",4,1,0,"A boy teaches our AFAB MC how to play football. after he does something unforgivable, mc decides to beat him in football and enrolls at an all boys school","https://myanimelist.net/manga.php?id=619"],
+					// v Name | Type | Setting | trigger level | Description | Link
+					["Vanilla Ice",4,1,0,"[?] \"Beautiful, delicate Yoon Sul and tall, brawny Taehee are exact opposites, and yet somehow they can't escape each other! Action-packed romantic comedy...with a twist!\" - VNmanga","https://myanimelist.net/manga.php?id=2699"],
+					["Versailes no Bara",4,0,0,"[w Anime] Father raises AFAB as a man","https://myanimelist.net/anime.php?id=338"],
+					["VRMMO de Summoner Hajimemashita",10,3,0,"MAAB plays female character in a adventure game","https://myanimelist.net/manga/128833"],
+					// w Name | Type | Setting | trigger level | Description | Link
+					["Wagaya no Oinari-sama",7,1,0,"[w Anime] The family protecting fox can swap gender at will (adventure, supernatural)","https://myanimelist.net/anime.php?id=3322"],
+					["with",6,1,0,"Siblings share a AFAB body",null],
+					["W-Juliet",2,1,0,"MC wants t become a actor. The father decides to make the mc spend 2 years as girl at school (romance, slice of life)[+Sequel]","https://myanimelist.net/manga.php?id=58"],
+					["Working!!",2,1,0,"restaurant slice of life comedy. The MC crossdresses sometimes since a coworked is scared of men","https://myanimelist.net/anime/6956"],
+					// x Name | Type | Setting | trigger level | Description | Link
+					// y Name | Type | Setting | trigger level | Description | Link
+					["Yo-Jo Life",1,1,0,"AMAb wakes up as a loli and asks his lolicon-friend for help (NOT ecchi)","https://mangakakalot.com/manga/mh923988"],
+					["You Name.",5,1,8,"[w Anime] A boy and a girl swap bodies from time to time (romance)","https://myanimelist.net/anime/32281"],
+					["Yubisaki Milk Tea",2,1,0,"After having to model in a bridal gown as substitute for the sister, the mc starts to like crossdressing","https://myanimelist.net/manga.php?id=579"],
+					// z Name | Type | Setting | trigger level | Description | Link
 
-        /**
-         * Name | Type | Setting | trigger level | Description | Link
-         *
-         * Type:
-         *  0 -> ?
-         *  1 -> Trans MTF
-         *  2 -> CD MTF
-         *  3 -> Trans FTM
-         *  4 -> CD FTM
-         *  5 -> body swap
-         *  6 -> body share
-         *  7 -> mix gender
-         *  8 -> Boy as magical girl
-         *  9 -> life swap (crossdress)
-         * 10 -> other MtF
-         * 11 -> other FtM
-         *
-         * Setting:
-         *  0 -> other
-         *  1 -> "real life"
-         *  2 -> fantasy (magic, etc)
-         *  3 -> game (fantasy)
-         *  4 -> dark ages (no magic)
-         *  5 -> real life + magic
-         *  6 -> game (dating sim)
-         *
-         * Trigger Level: how good is the representation (0 = uknown; 10 = good, 1 = worst)
-         *
-         * Link (multiple formats allowed, but only one at a time):
-         *   null
-         *   "https://a.com/183"
-         *   ["https://a.com/hi","https://b.com/manga"]
-         *
-         *
-         * please keep it in alphabetic order (it helps avoiding duplicates)
-         */
-        var list = [
-          // # Name | Type | Setting | trigger level | Description | Link
-          ["1/2 prince",3,3,0,"AFAB plays prince in a videogame","https://www.mangahub.io/manga/1-2-prince"],
-          ["30-Sai Made Doutei De Itara Mahou Shoujo Ni Narimashita",8,5,0,"\"Comedy manga about magical girls who used to be old virgin guys!\" - manganato","https://readmanganato.com/manga-hg985341"],
-          // a Name | Type | Setting | trigger level | Description | Link
-          ["a boy, that can't stop crossdressing",2,1,8,"Due to a misunderstanding his friend thinks he genderswapped","https://mangakakalot.com/manga/ob924682"],
-          ["A Boy who Loves Genderswap got Genderswapped so He acts out His Ideal Genderswap Girl",1,1,8,"Just look at the title..","https://mangakakalot.com/read-vw0sz158524537112"],
-          ["After school nightmare",7,0,0,"(Horror) an enby has to fight a nightmare","https://www.mangahere.cc/manga/after_school_nightmare/"],
-          ["Akane-chan Overdrive",1,1,0,"Reborn into a girl","https://mangakakalot.com/manga/akanechan_overdrive"],
-          ["akb49 renai kinshi jourei",2,1,0,"a crossdresser ends up in a female idol group","https://www.mangahere.cc/manga/akb49_renai_kinshi_jourei/"],
-          ["Alice on deadlines",1,0,0,"A male shinigami takes over a girls body","https://www.mangahub.io/manga/alice-on-deadlines"],
-          ["Amachin wa Jishou",2,1,0,"crossdress (likes to play with others based on it), school","https://myanimelist.net/manga/110892/Amachin_wa_Jishou_%E2%99%82"],
-          ["a manga about a hero who pulled out the magic sword and became a girl",1,2,0,"..","https://manganato.com/manga-fh982442"],
-          ["Ame Nochi Hare",1,1,0,"A group of school AMAB end up being turned into girls","https://www.mangahub.io/manga/ame-nochi-hare"],
-          ["Americano Exodus",2,2,0,"an AMAB has to hide his gender to survive, since hes a magician","https://mangakakalot.com/read-ch7rm158504977361"],
-          // b Name | Type | Setting | trigger level | Description | Link
-          ["bishoujo ni natta kedo netoge haijin yattemasu",1,3,0,"A genderswapped AMAB flees into a game from it (with his new appearence)","https://mangakakalot.com/read-vb3xf158524569815"],
-          ["boku girl",1,1,0,"A AMAB transforms after beeing confessed to.","https://mangaread.co/manga/boku-girl/"],
-          ["boku no shotaiken",1,1,0,"Revived by a scientist as his wife","https://www.mangahub.io/manga/boku-no-shotaiken"],
-          ["boku to boku",2,1,0,"Multiple crossdressers at a school","https://www.mangahere.cc/manga/boku_to_boku/"],
-          ["boku wo mari no naka",1,1,5,"a hikikomori wakes up as his crush","https://www.mangahub.io/manga/boku-wa-mari-no-naka"],
-          ["boy of the female wolf",4,0,0,"[havn't read it yet] tags: comedy, romance, shojo, harem","https://www.mangahere.cc/manga/boy_of_the_female_wolf/"],
-          ["bro girl",1,1,0,"His friend turns into a girl for a year (Comedy / slice of life)","https://mangakakalot.com/manga/lr920163"],
-          // c Name | Type | Setting | trigger level | Description | Link
-          ["chichi ga loli na mono de",1,1,0,"A lolicons father turns into a loli","https://mangakakalot.com/manga/chichi_ga_loli_na_mono_de"],
-          ["Chirality",0,0,0,"[not read yet -> idk why GB] A technovirus turns people into cyborgs","https://www.mangahub.io/manga/chirality"],
-          ["Click",1,1,0,"MC turns into a girl with 16 mid highschool (Tradegy, shoujo, romance)","https://www.mangahere.cc/manga/click/"],
-          ["Cross days",2,1,0,"School days with crossdressing (and less yandere)","https://myanimelist.net/manga/23438/Cross_Days"],
-          ["Cute x Guy",3,1,0,"MC takes expirimental medicine and ends up as a boy (BL, Comedy, School)","https://bato.to/series/11080/cutexguy"],
-          // d Name | Type | Setting | trigger level | Description | Link
-          ["Divine Melody",1,0,0,"[?] a fox demon is saved by two childs and pays the debt back 200 years later as a man","http://www.mangahere.cc/manga/divine_melody/"],
-          ["Dog style",1,1,0,"A collection. Aizen: wants a girlfriend and due to a poor formulated wish ends up as a girl","https://myanimelist.net/manga/10268/Dog_Style"],
-          ["Dou Danjo",5,1,0,"A tomboy and a boy swap bodies","https://myanimelist.net/manga/7402/Dou_Danjo"],
-          // e Name | Type | Setting | trigger level | Description | Link
-          ["Eiyuu No Musume To Shite Umarekawatta Eiyuu Wa Futatabi Eiyuu O Mezasu",1,2,0,"A AMAB hero is eincarnated as a daughter of fellow comrades (ecchi)","https://manga68.net/manga/eiyuu-no-musume-to-shite-umarekawatta-eiyuu-wa-futatabi-eiyuu-o-mezasu/"],
-          // f Name | Type | Setting | trigger level | Description | Link
-          ["Fukigen cinderella",7,1,0,"An AMAB keeps cycling gender","https://mangahub.io/manga/fukigen-cinderella"],
-          ["Full moon no sasayaite",1,2,0,"A vampire/werewolf turns into a girl and tries to hide it","https://www.mangahere.cc/manga/full_moon_ni_sasayaite/"],
-          ["Futaba-kun Change",1,1,0,"AMAB switches gender if excited or stressed (romance, ecchi, pretty old)","https://www.mangahere.cc/manga/futaba_kun_change/"],
-          // g Name | Type | Setting | trigger level | Description | Link
-          ["Giniro no Genders",2,1,0,"crossdresser posts his pictures online, gets support and ends up going out as a girl","https://www.mangahere.cc/manga/giniro_no_genders/"],
-          // h Name | Type | Setting | trigger level | Description | Link
-          ["Hana no Kishi",0,0,0,"[?] After the older brother died AFAB wants to become a knight","https://www.mangahub.io/manga/hana-no-kishi"],
-          ["Hanaukyo Maid Tai",0,1,0,"[?] a orphan arrives in his grandfathers mansion, which is filled with maids","https://mangakakalot.com/read-ge2zs158524523664"],
-          ["he is a magical girl",8,5,0,"Short romance between Magical Girl Boy and his Friend","https://mangakakalot.com/manga/fo924386"],
-          ["House Gakuen Misoragumi",4,1,0,"A lesbian gets enrolled in a all boys school","https://www.mangahub.io/manga/houou-gakuen-misoragumi"],
-          // i Name | Type | Setting | trigger level | Description | Link
-          ["i am a killer maid",0,1,0,"\"This is the story of a mangaka, a killer maid, and body swapping ramen, with a side of gratuitous violence and explosions.\" - 1stkissmanga","https://1stkissmanga.io/manga/i-am-a-killer-maid/"],
-          ["i am my wife",1,1,0,"AMAB turns into girl and falls in love with his male copy","https://www.mangahub.io/manga/i-am-my-wife"],
-          ["i am not a goddess",1,3,0,"A AMAB turns into a OP woman uppon entering a game. (connection real world - game world; somewhat magical girl vibes; ecchi)","https://m.manganelo.com/manga-dv117767"],
-          ["i am worried that my childhood friend is too cute",1,1,0,"Ecchi Romance Comedy","https://readmanganato.com/manga-hu984929"],
-          ["ichinensei ni nacchattara",1,1,0,"Revived as elementary school girl","https://www.mangahere.cc/manga/ichinensei_ni_nacchattara/"],
-          ["i dont really get it, but it seems i reincarnatrd in another world",1,2,0,"Magic Isekai","https://readmanganato.com/manga-gy983607"],
-          ["i girl",9,1,0,"Adult siblings crossdress as each other (JOSEI (not shojo))","https://myanimelist.net/manga/61727"],
-          ["its not as if i wanted to dress like a woman",2,1,8,"A man ends up crossdressing for a job. (romance (bl), CD ally)","https://www.mangahub.io/manga/it-s-not-as-if-i-wanted-to-dress-like-a-woman"],
-          ["i turned into a farm girl after i got reincarnated",1,0,0,"look at the title.. (comedy)","https://mangakakalot.com/read-qk6fy158524473762"],
-          ["i who blocked the demon kings ultimate attack ended up as the little heros nanny",0,2,0,"[?] (magic, comedy, action)","https://mangakakalot.com/manga/xf923896"],
-          // j Name | Type | Setting | trigger level | Description | Link
-          ["Jinzou Shoujo",1,1,0,"a scientist revives a boy in the body of a girl (Horror, Drama, Mystery)","https://myanimelist.net/manga/5479/Jinzou_Shoujo"],
-          ["jo-yo life",1,1,0,"Wakes up as loli","https://mangakakalot.com/manga/mh923988"],
-          ["jun ai sensation",6,1,0,"A AMABs spirit posesses a girls body (romance, comedy, did-similar)","https://www.mangahub.io/manga/jun-ai-sensation"],
-          // k Name | Type | Setting | trigger level | Description | Link
-          ["Kagayaku Otoko no Ko Juku",2,1,0,"To get a manga apprenticeship a AMAB has to crossdress","https://myanimelist.net/manga/46134"],
-          ["kakumei no hi",1,1,0,"A delinquent turns into a girl and his friends are interrested in them","https://www.mangahub.io/manga/kakumei-no-hi"],
-          ["Kämpfer",8,5,4,"[w Anime] AMAB is selected to some sort of hunger-games without area restriction and has a female fighting form (romance, comedy, later ecchi)","https://myanimelist.net/anime/6205"],
-          ["Kanojo ni naru hi",1,1,0,"One of two always competing childhood-friend AMABs turns female","https://myanimelist.net/manga/54817"],
-          ["Kashimashi: Girl meets Girl",1,1,9,"[w Anime] An alien revives a AMAB as a Girl after accidentally killing him. (Romance)","https://myanimelist.net/anime/667"],
-          ["kenja no deshi na nonuru kenja",1,3,7,"The MC's ingame OP Character turns into a loli","https://mangakakalot.com/read-xc0ux158504848745"],
-          ["kimoOta, idol yarutteyo",1,1,0,"An idol turns into a girl (comedy slice of life)","https://mangakakalot.com/read-hw0rs158524507062"],
-          ["Kunisaki Izumo no Jijou",0,1,0,"A AMAB is often mistaken as a girl.","https://www.mangahere.cc/manga/kunisaki_izumo_no_jijou/"],
-          // l Name | Type | Setting | trigger level | Description | Link
-          ["Lady Beast",5,4,0,"an arranged marriage ends in a body swap","https://1stkissmanga.io/manga/lady-beast/"],
-          ["Love in the Mask",4,1,0,"A AFAB becomes a crossdressing bodyguard","https://www.mangahere.cc/manga/love_in_the_mask/"],
-          // m Name | Type | Setting | trigger level | Description | Link
-          ["Majosama to kyoudai",1,5,0,"Oneshot: two brothers get taken in by a witch and then turned into girl in order to select one of them as her successor","https://mangakakalot.com/manga/ar919733"],
-          ["Mana Senpai's Request",1,1,0,"AMABs crush agrees to go out if AMAB turns female (Ecchi, yuri)","https://ww.mangakakalot.tv/manga/manga-gx983606"],
-          ["Magical Trans",8,5,0,"A school-boy joins a Magical Girl club and ends up as one","https://www.mangahere.cc/manga/magical_trans/"],
-          ["Mayo Chiki",2,1,0,"[w Anime] A AMAB sidecharacter crossdresses as butler all the time and sometimes others as well (school, comedy)","https://myanimelist.net/anime/10110"],
-          ["Mei chan no shitsuji",2,1,0,"[?] an AMAB follows the MC into all-girls school (romance)","https://manga68.net/manga/mei-chan-no-shitsuji/"],
-          ["Metamo Kiss",5,1,0,"MC can switch bodies with his crush (and her crush (his brother) can undo it with a kiss)","https://www.mangahub.io/manga/metamo-kiss_118"],
-          ["Mikazuki mao cant choose a gender",3,1,0,"FTM Romance with Roommate","https://mangakakalot.com/manga/vg925531"],
-          ["Minami ke",2,1,0,"[w Anime] In order to get closer to his crush a boy keeps crossdressing. (slice of life, pretty long)","https://myanimelist.net/anime/2963"],
-          ["My Barbaric Girlfriend",5,1,0,"A rude AFAB and a effeminate AMAB switch bodies","https://www.mangahere.cc/manga/my_barbaric_girlfriend/"],
-          ["My Boyfriend is a Vampire",1,5,0,"AMAB turns into a girl after beeing bitten by a vampire (BL, school, comedy)","https://www.mangahub.io/manga/my-boyfriend-is-a-vampire"],
-          ["My Brothers Body is too useful",5,1,0,"Siblings are body-swapped in order to help the other one build a relationship with their crush","https://1stkissmanga.io/manga/my-brothers-body-is-too-useful/"],
-          ["My DNA Girlfriend",0,1,0,"He wakes up with a female version of himself next to him","https://www.mangahere.cc/manga/my_d_n_a_girlfriend/"],
-          ["My Lady and I",2,1,0,"A boy crossdresses as a maid (comedy, romance)","https://manhuascan.com/manga-my-lady-and-i-.html"],
-          ["My Lolita Brother",1,1,0,"Two AMAB siblings wish each other to turn into a girl, and it happens","https://mangakakalot.com/read-up1tr158504928134"],
-          ["My Wife is a Man",2,1,0,"Daily life of a gay relationship with a crossdresser","https://www.mangahub.io/manga/my-wife-is-a-man"],
-          // n Name | Type | Setting | trigger level | Description | Link
-          ["National School Prince is a Girl",0,0,0,"AMAB reincarnates as Girl and disguises as a man, while reigning in a game world","https://1stkissmanga.io/manga/national-school-prince-is-a-girl/"],
-          ["neta chara tensei so ka anmari da",1,2,0,"Isekai in game-world as own op character","https://mangaowl.net/single/63231/neta-chara-tensei-to-ka-anmari-da-"],
-          ["No Side",1,1,0,"A AMAB dies during a rugby match and posesses a girl ","https://www.mangahub.io/manga/no-side"],
-          // o Name | Type | Setting | trigger level | Description | Link
-          ["Oh no i swapped bodies with an anti fan",5,1,0,"An AMAB idol and a AFAB anti-fan (which is a fan of a fellow idol-group member) swap bodies and have to keep each others lifes afloat (romance, comedy)","https://1stkissmanga.io/manga/oh-no-ive-swapped-bodies-with-an-anti-fan/"],
-          ["Okaeri Alice",0,1,0,"[?] tags: drama, gb, school, shounen","https://mangakakalot.com/manga/vm922794"],
-          ["Oneechan ga Mamotte Ageru",2,1,0,"Two Brothers end up as crossdressing idols","https://myanimelist.net/manga/45249"],
-          ["onii-chan is done for",1,1,7,"His younger sister turns him into her little sister (slice of life)","https://mangakakalot.com/read-zf5tb158504876104"],
-          ["Only Sense Online",1,3,8,"Due to a bug a feminine AMAB plays a girl in a game","https://myanimelist.net/manga/70795"],
-          ["Ore alice danjo gyakuten",5,2,0,"A AMAb reincarnates into Alice in the wonderland and swaps bodies with her on arrival","https://bato.to/series/38645/ore-alice-danjo-gyakuten"],
-          ["Ore twintail ni narimasu",8,5,0,"[w Anime] A boy ends up as a Magical Girl (Comedy, Romance?)","https://myanimelist.net/anime/24705"],
-          ["Otome no Ihora!",5,1,0,"Siblings (a tomboy and a girlish boy) swap bodies before changing schools","https://chap.manganelo.com/manga-jk94678"],
-          ["Otoke no Musume days",2,1,0,"Multiple AMAB crossdress together","https://mangakakalot.com/manga/otoko_no_musume_days"],
-          ["Otome wa Oneesama No Koishiteru",2,1,0,"A AMAB crossdresses in a All-Girls school","https://ww.mangakakalot.tv/manga/manga-vo972497"],
-          ["Oto Koi",2,1,0,"Collection of crossdressing BL","https://myanimelist.net/manga/57081"],
-          // p Name | Type | Setting | trigger level | Description | Link
-          ["Pretty face",0,1,0,"After an accident AMABs face is restore on basis of a picture of his female crush","https://www.mangahere.cc/manga/pretty_face/"],
-          ["Princess Princess",2,1,0,"[w Anime] An all-boys school has a tradition of letting a few AMABs crossdress every year","https://myanimelist.net/anime/907"],
-          ["Princess is not a Boy",0,0,0,"[?] a human has the ability to let demons change their gender","https://1stkissmanga.io/manga/princess-is-not-a-boy/"],
-          ["Prunus Girl",2,1,0,"[?] school, gb, romance, mystery, comedy","http://www.mangahere.cc/manga/prunus_girl/"],
-          // q Name | Type | Setting | trigger level | Description | Link
-          // r Name | Type | Setting | trigger level | Description | Link
-          ["Return",1,1,0,"A AMAB dies and posesses a girl to go back to his school (romance, opmedy)","https://www.mangahere.cc/manga/return/"],
-          ["reversible",2,1,0,"All Boys school, which makes some students crossdress","https://www.mangahere.cc/manga/reversible/"],
-          // s Name | Type | Setting | trigger level | Description | Link
-          ["Sekainohate de aimashou",1,1,0,"An alien chooses an AMAB as his wife","https://www.mangahub.io/manga/sekainohate-de-aimashou"],
-          ["Skirt",2,1,0,"A short oneshot","https://myanimelist.net/manga/33945"],
-          ["Shinobi yoru wa kusemono",0,0,0,"[?] school comedy, romance","https://www.mangahub.io/manga/shinobi-yoru-koi-wa-kusemono"],
-          ["Shoujo shounen",2,1,0,"Collection of stories of AMABs ending up as crossdressing idols","https://w12.mangafreak.net/Manga/Shoujo_Shounen"],
-          ["Shounen Maid",2,1,0,"An orphan ends up as his grandfathers maid","https://myanimelist.net/anime/32175"],
-          ["Shounen Princess",2,0,0,"Father forcess AMAB to marry princess","https://myanimelist.net/manga/80523"],
-          ["Shounen Oujo yukihiro utako",2,4,8,"A boy ends up as double of a princess","http://readmangafox.xyz/manga/shounen-oujo-yukihiro-utako"],
-          ["spill it, cocktail nights",4,5,0,"The MC's friend is a crossdressing (female) magical Girl (romance)","https://mangakakalot.com/manga/ek926071"],
-          ["Strange mansion",0,1,0,"[forgot since its been a while - i think it was a crossdressing neighbour]","https://myanimelist.net/manga/12293"],
-          // t Name | Type | Setting | trigger level | Description | Link
-          ["tadashi wo ore na heroine toshite",1,6,4,"dating sim isekai","https://mangakakalot.com/read-ni5gp158524507166"],
-          ["tensei pandemic",0,1,0,"[?], ecchi, MC AMAB, comedy","https://www.mangahere.cc/manga/tensei_pandemic/"],
-          ["Tensei shitara Ore ga Heroine de Aitsu ga Yuusha Datta",1,2,0,"Isekai as Hroine while friend is Hero (Romance, Adventure)",["https://myanimelist.net/manga/127834","https://mangakakalot.com/manga/xi923155"]],
-          ["tetsuan Birdy",6,0,0,"[w Anime] A AMAB ends up sharing a (appearence changing) body with a female space cop (there are 2 anime adaptations with diffrent stories, but id recommend the decode as first one)","https://myanimelist.net/anime/3974"],
-          ["the moment when a fox becomes a wolf",5,1,0,"A AFAB, whose crush fell in love with the sister, and a \"average typical\" AMAB switch bodies","https://www.mangahub.io/manga/the-moment-when-a-fox-becomes-a-wolf"],
-          ["the reincarnated vampire wants an afternoon nap",1,2,0,"Reincarnated as a OP female vampire (only low focus on GB)","https://myanimelist.net/manga/101192"],
-          ["The Story of How My Best Friend and the Person I like Changed Bodies",5,1,0,"oneshot","https://mangamiso.net/manga/the-story-of-how-my-best-friend-and-the-person-i-like-changed-bodies"],
-          ["Trans Trans",0,3,0,"A AFAB and AMAB both play not AGAB characters in a game and end up falling in love, while strange things happen ingame and in real-life","https://myanimelist.net/manga/61561"],
-          // u Name | Type | Setting | trigger level | Description | Link
-          ["unparalleled memori kun",1,1,0,"(comedy)","https://mangakakalot.com/manga/ny924840"],
-          ["Usotsuki Lily",2,1,0,"a girl which hates men gets asked out by  a crossdresser","https://www.mangahub.io/manga/usotsuki-lily"],
-          // v Name | Type | Setting | trigger level | Description | Link
-          ["VRMMO de Summoner Hajimemashita",10,3,0,"MAAB plays female character in a adventure game","https://myanimelist.net/manga/128833"],
-          // w Name | Type | Setting | trigger level | Description | Link
-          ["with",6,1,0,"Siblings share a AFAB body",null],
-          ["Working!!",2,1,0,"restaurant slice of life comedy. The MC crossdresses sometimes since a coworked is scared of men","https://myanimelist.net/anime/6956"],
-          // x Name | Type | Setting | trigger level | Description | Link
-          // y Name | Type | Setting | trigger level | Description | Link
-          ["Yo-Jo Life",1,1,0,"AMAb wakes up as a loli and asks his lolicon-friend for help (NOT ecchi)","https://mangakakalot.com/manga/mh923988"],
-          ["You Name.",5,1,8,"[w Anime] A boy and a girl swap bodies from time to time (romance)","https://myanimelist.net/anime/32281"]
-          // z Name | Type | Setting | trigger level | Description | Link
 
-          //TODO add more - https://justpaste.it/7cqmc after prunus girl
-          //TODO search "]\n" -> rep "],\n"
-          //TODO remove , from last row
-        ];
-        var o = "<table><tr><th>Name</th><th>Type</th><th>Setting</th>"+(showOffenseRating?"<th>Offense Safety</th>":"")+"<th>Description</th><th>Link</th></tr>";
 
-        var i = -1;
-        var found = 0;
-        var searched = 0;
-        while (++i < list.length){
-          searched = searched + 1;
-          if (!types.includes(list[i][1])){
-            console.log("Filtered "+list[i][0]+" (type): "+list[i][1]);
-            continue;
-          }
-          if (!settings.includes(list[i][2])){
-            console.log("Filtered "+list[i][0]+" (setting): "+list[i][2]);
-            continue;
-          }
-          if (list[i][3]==0){
-            if (!showUnkTrigger){
-              console.log("Filtered "+list[i][0]+" (unk trigger)");
-              continue;
-            }
-          }else{
-            if (list[i][3] < minTrigger){
-              console.log("Filtered "+list[i][0]+" (trigger)");
-              continue;
-            }
-          }
-          found = found + 1;
-          o += "<tr><td>"+list[i][0]+"</td><td>";
-          switch (list[i][1]){
-            case 1: o+= "MtF";break;
-            case 2: o+= "AMAB CD";break;
-            case 3: o+= "FtM";break;
-            case 4: o+= "AFAB CD";break;
-            case 5: o+= "Swap";break;
-            case 5: o+= "Shared";break;
-            case 7: o+= "NB";break;
-            case 8: o+= "AMAB as m.G.";break;
-            case 9: o+= "AMAB and AFAB CD";break;
-            case 10: o+="Other MtF";break;
-            case 11: o+="Other FtM";break;
-            default: o+="";break;
-          }
-          o += "</td><td>";
-          switch (list[i][2]){
-            case 1: o+= "RL";break;
-            case 2: o+= "Fantasy";break;
-            case 3: o+= "Fantasy Game";break;
-            case 4: o+= "Dark ages";break;
-            case 5: o+= "RL + Magic";break;
-            case 6: o+= "Dating sim";break;
-            default: o+="";break;
-          }
-          o += "</td>"+(showOffenseRating?("<td>"+(list[i][3]==0?"":list[i][3])+"</td>"):"")+"<td>"+list[i][4]+"</td><td>";
-          if(list[i][5]!=null){
-            if (!Array.isArray(list[i][5])){
-              list[i][5]=[list[i][5]];
-            }
-            for (zz of list[i][5]){
-              var a1 = zz.indexOf('/')+2;
-              var a2 = zz.indexOf('/',a1);
-              var website_name = zz.substring(a1,a2);
-              if(o.endsWith("a>"))o+="<br>";
-              o += "<a href=\""+zz+"\">"+website_name+"</a>";
-            }
-          }
-          o += "</td></tr>";
-        }
-        o += "</table><p>Found "+found+" matches in a database of "+searched+" Mangas.</p>";
-        document.getElementById("table").innerHTML = o;
-        return;
-      }
-    </script>
-    <style>
-      /* basic settings */
-      body{
-        background-color: #002b36;
-        color: #fdf6e3;
-        max-width: 1500px;
-      }
-      a, details summary {color: #268bd2;}
-      .slider {
-        width: 100%;
-        height: 25px;
-        outline: none;
-        background: #586e75;
-        opacity: 0.7;
-      }
-      .slider:hover {opacity: 1;}
-      fieldset {
-        margin-top: 15px;
-      }
-      footer {
-        border-top: 2px solid #657b83;
-      }
-      h4 { /* titles within fieldsets */
-        margin: 5px;
-        text-decoration: underline;
-      }
-      button.big {
-        font-size: 150%;
-        width: 100%;
-        background-color: #268bd2;
-        color: #002b36;
-      }
-      button.small {
-        background-color: transparent;
-        color: #fdf6e3;
-        border: 1px solid #268bd2;
-        border-radius: 10px;
-        padding: 3px;
-      }
-      /* table design */
-      tr:nth-child(even) {background-color: #073642;}
-      tr:nth-child(odd){background-color: #002b36;}
-      th {
-        background-color: #d33682;
-        color: #002b36;
-      }
-      table {border: 1px solid #657b83;}
-      /* Checkbox - prevent weird linewrap*/
-      label {white-space: nowrap;}
-      #table {
-        border-top: 2px solid #657b83;
-        border-bottom: 2px solid #657b83;
-        padding-top: 10px;
-        padding-bottom: 10px;
-      }
-      details {
-        margin-left: 5px;
-      }
-      details[open] {
-        border: 1px solid #657b83;
-        padding: 10px;
-      }
-    </style>
-  </head>
-  <body>
-    <h1>Filtered Gender Bender Anime List</h1>
-    <details>
-      <summary>DISCLAIMER</summary>
-      <p>CLICKING ANY LINKS AS WELL AS READING ANY OF THEESE IS YOUR OWN DECISSION AND I TAKE NO RESPONSIBILITY FOR ANYTHIN THAT MIGHT HAPPEN.</p>
-      <p>I HAVE NO CONNECTION TO ANY OF THE LINKED WEBSITES.</p>
-    </details>
-    <details>
-      <summary>Infos about this Project</summary>
-      <p>I've made this to help you find mangas in this genre (since there aren't too many and not all of them are on MyAnimeList, etc).</p>
-      <p>I hope to be able to continue, improve and exapnd this, but i can't guarantee anything</p>
-      <p>Why do i use AMAB and AFAB instead of boy and girl? i can't always remember (or want to spoil) wheater the characters stay cis (in a wrong body) or change. Also it hopefully avoids a lot of confusion.</p>
-    </details>
-    <details>
-      <summary>Support this Project</summary>
-      <p>If you want to help this small Project, feel free.</p>
-      <p>
-        What can you do:
-        <ul>
-          <li>Suggest more mangas (and animes)</li>
-          <li>Help writing better descriptions</li>
-          <li>Help categorizing and safety-rating theese</li>
-          <li>Suggest Improvements to this list</li>
-        </ul>
-        How?<br>
-        If you know a bit of HTML / JS you can make PRs on the <a href="https://github.com/username746283/gender_bender_manga_list">GitHub page</a>.<br>
-        If not just <a href="https://www.reddit.com/message/compose/?to=Jane6447">write me your suggestions on reddit.</a>
-      </p>
-    </details>
-    <details>
-      <summary>Unsponsored Ads</summary>
-      <p>I don't get paid for this or get any other benefit, theese are just products i personally like to use</p>
-      <h4>Free Android offline Manga Reader without Ads:</h4>
-      <p><a href="https://github.com/tachiyomiorg/tachiyomi">Tachiyomi</a> - it is free, open source, ad-free , can download mangas, has all mangas in this list and has a lot of quality of life features (like lower brightness, auto-cropping, splitting pages, color-correction, night mode, etc).</p>
-      <h4>OpenVPN</h4>
-      <p>OpenVPN has many implimentations for almost every device. Its free and OpenSource. Youll have to find the servers yourself, but you can easily find lists with google. <a href="https://www.vpngate.net/en/">A server list</a>. <a href="https://play.google.com/store/apps/details?id=de.blinkt.openvpn&hl=en&gl=US">An android version</a></p>
-    </details>
-    <details>
-      <summary>Credits</summary>
-      <p>If you help this Project (and dont have a problem with it) youll be added to this list as well</p>
-      <h4>Mangas</h4>
-      <p>I've found many of theese over the years with search-engines and some of them are from r/egg_irl, friends, etc, but  i didn't write down the names back then.</p>
-      <h4>Design</h4>
-      <p>Color-Selection: <a href="https://github.com/altercation/solarized">Solarized</a></p>
-    </details>
-    <div id="options">
-      <fieldset>      <!-- TYPE -->
-        <legend>Type</legend>
-        <button onClick="deselAll_types()" class="small">Deselect All</button>
-        <button onClick="selAll_types()" class="small">Select All</button>
-        <button onClick="selAllAMAB()" class="small">Select All with AMAB</button>
-        <button onClick="selAllAFAB()" class="small">Select All with AFAB</button>
-        <h4>AMAB</h4>
-        <label for="type_1"><input id="type_1" type="checkbox"/>AMAB turns Female</label>
-        <label for="type_2"><input id="type_2" type="checkbox"/>AMAB crossdresses</label>
-        <label for="type_8"><input id="type_8" type="checkbox"/>AMAB as magical girl</label>
-        <label for="type_10"><input id="type_10" type="checkbox"/>Other (AMAB)</label>
-        <h4>AFAB</h4>
-        <label for="type_3"><input id="type_3" type="checkbox"/>AFAB turns Male</label>
-        <label for="type_4"><input id="type_4" type="checkbox"/>AFAB crossdressers</label>
-        <label for="type_11"><input id="type_11" type="checkbox"/>other (AFAB)</label>
-        <h4>Other</h4>
-        <label for="type_0"><input id="type_0" type="checkbox"/>&lt;unknown&gt;</label>
-        <label for="type_5"><input id="type_5" type="checkbox"/>Body Swap</label>
-        <label for="type_6"><input id="type_6" type="checkbox"/>Body Share</label>
-        <label for="type_7"><input id="type_7" type="checkbox"/>Nonbinary</label>
-        <label for="type_9"><input id="type_9" type="checkbox"/>AFAB and AMAB crossdress</label>
-      </fieldset>
-      <fieldset>      <!-- Setting -->
-        <legend>Setting</legend>
-        <button onClick="deselAll_setting()" class="small">Deselect All</button>
-        <button onClick="selAll_setting()" class="small">Select All</button>
-        <br>
-        <label for="setting_1"><input id="setting_1" type="checkbox" checked/>Real life</label>
-        <label for="setting_2"><input id="setting_2" type="checkbox" checked/>Fantasy World</label>
-        <label for="setting_3"><input id="setting_3" type="checkbox" checked/>Fantasy Game World</label>
-        <label for="setting_4"><input id="setting_4" type="checkbox" checked/>Dark Ages</label>
-        <label for="setting_5"><input id="setting_5" type="checkbox" checked/>Modern World + Magic</label>
-        <label for="setting_6"><input id="setting_6" type="checkbox" checked/>Dating Sim Game</label>
-        <label for="setting_0"><input id="setting_0" type="checkbox" checked/>&lt;unknown / other&gt;</label>
-      </fieldset>
-      <fieldset>      <!-- Offense Filter -->
-        <legend>Offense Filter (WIP)</legend>
-        <span>I tried to rate how offensive it is, but im not the best at rating theese things..</span><br>
-        <span>Since its been a while for some i often left many unrated</span><br>
-        <span>Move slider right to filter more.</span>
-        <input type="range" min="1" max="10" value="1" class="slider" id="offenseSlider">
-        <label for="allowUnrated"><input id="allowUnrated" type="checkbox" checked/>Allow unrated ones</label>
-        <label for="showOffenseRating"><input id="showOffenseRating" type="checkbox"/>Show Offense safety rating in result</label>
+					//TODO https://myanimelist.net/forum/?topicid=136737 female cd Ichigo Channel is done
+					//TODO https://www.reddit.com/r/manga/comments/k4j6hv/do_you_know_of_any_transgender_manga_other_than/
+					//TODO https://www.reddit.com/r/CrossdressingManga
 
-      </fieldset>
-      <button class="big" onclick="generate()" style="margin-top: 20px;margin-bottom: 20px">Search</button>
-      <p>If you don't know what you're doing i'd suggest using a VPN for some of the links (all except MyAnimeList) (if you dont have one look into the \"Unsponsored Ads\"section).</p>
-    </div>
-    <div id="table"></div>
-    <div id="changelog">
-      <h2>Changelog</h2>
-      <p>If i update this list i will list all the changes here -&gt; you dont have to look throu the entire list if you want to check if added something new.</p>
-      <h4>18.09.2021</h4>
-      Published
-      <h4>16.09.2021</h4>
-      New Mangas:
-      <ul>
-        <li>30-Sai Made Doutei De Itara Mahou Shoujo Ni Narimashita</li>
-        <li>divine Melody</li>
-        <li>eiyuu-no-musume-to-shite-umarekawatta-eiyuu-wa-futatabi-eiyuu-o-mezasu</li>
-        <li>i am a killer maid</li>
-        <li>lady beast</li>
-        <li>mei chan no shitsuji</li>
-        <li>My broters body is too useful</li>
-        <li>My wife is a man</li>
-        <li>National school prince is a girl</li>
-        <li>oh no i've swapped bodies with an anti fan</li>
-        <li>Ore alice danjo gyakuten</li>
-        <li>Yo-Jo Life</li>
-      </ul>
-      Design Changes:
-      <ul>
-        <li>Added sorting option</li>
-        <li>Improved the design</li>
-        <li>Added "Unsponsored Ads"</li>
-        <li>Added Credits</li>
-        <li>Added descriptions</li>
-        <li>Added "how to help" explanation</li>
-        <li>Added Infos about this</li>
-        <li>Added Changelog</li>
-      </ul>
-      <h4>Predecessor v2 (14.09.2021)</h4>
-      <p>A plain text list of mangas and animes (name, description) on pastebin.</p>
-      <ul>
-        <li>all the initial mangas (106)</li>
-      </ul>
-    </div>
-  </body>
+				];
+				var o = "<table><tr><th>Name</th>";
+				if (showType) o +="<th>Type</th>";
+				if (showSetting) o +="<th>Setting</th>";
+				if (showOffenseRating) o +="<th>Offense Safety</th>";
+				o +="<th>Description</th><th>Link</th></tr>";
+
+				var i = -1;
+				var found = 0;
+				var searched = 0;
+				while (++i < list.length){
+					searched = searched + 1;
+					if (!types.includes(list[i][1])){
+						console.log("Filtered "+list[i][0]+" (type): "+list[i][1]);
+						continue;
+					}
+					if (!settings.includes(list[i][2])){
+						console.log("Filtered "+list[i][0]+" (setting): "+list[i][2]);
+						continue;
+					}
+					if (list[i][3]==0){
+						if (!showUnkTrigger){
+							console.log("Filtered "+list[i][0]+" (unk trigger)");
+							continue;
+						}
+					}else{
+						if (list[i][3] < minTrigger){
+							console.log("Filtered "+list[i][0]+" (trigger)");
+							continue;
+						}
+					}
+					found = found + 1;
+					o += "<tr><td>"+list[i][0];
+					if(showType){
+						o+="</td><td>";
+						switch (list[i][1]){
+							case 1: o+= "MtF";break;
+							case 2: o+= "AMAB CD";break;
+							case 3: o+= "FtM";break;
+							case 4: o+= "AFAB CD";break;
+							case 5: o+= "Swap";break;
+							case 5: o+= "Shared";break;
+							case 7: o+= "NB";break;
+							case 8: o+= "AMAB as m.G.";break;
+							case 9: o+= "AMAB and AFAB CD";break;
+							case 10: o+="Other MtF";break;
+							case 11: o+="Other FtM";break;
+							default: o+="";break;
+						}
+					}
+					if(showSetting){
+						o += "</td><td>";
+						switch (list[i][2]){
+							case 1: o+= "RL";break;
+							case 2: o+= "Fantasy";break;
+							case 3: o+= "Fantasy Game";break;
+							case 4: o+= "Dark ages";break;
+							case 5: o+= "RL + Magic";break;
+							case 6: o+= "Dating sim";break;
+							default: o+="";break;
+						}
+					}
+					o += "</td>"+(showOffenseRating?("<td>"+(list[i][3]==0?"":list[i][3])+"</td>"):"")+"<td>"+list[i][4]+"</td><td>";
+					if(list[i][5]!=null){
+						if (!Array.isArray(list[i][5])){
+							list[i][5]=[list[i][5]];
+						}
+						for (zz of list[i][5]){
+							var a1 = zz.indexOf('/')+2;
+							var a2 = zz.indexOf('/',a1);
+							var website_name = zz.substring(a1,a2);
+							if(o.endsWith("a>"))o+="<br>";
+							o += "<a href=\""+zz+"\">"+website_name+"</a>";
+						}
+					}
+					o += "</td></tr>";
+				}
+				o += "</table><p>Found "+found+" matches in a database of "+searched+" Mangas.</p>";
+				document.getElementById("table").innerHTML = o;
+				return;
+			}
+		</script>
+		<style>
+			/* basic settings */
+			body{
+				background-color: #002b36;
+				color: #fdf6e3;
+				max-width: 1500px;
+			}
+			a, details summary {color: #268bd2;}
+			.slider {
+				width: 100%;
+				height: 25px;
+				outline: none;
+				background: #586e75;
+				opacity: 0.7;
+			}
+			.slider:hover {opacity: 1;}
+			fieldset {
+				margin-top: 15px;
+			}
+			footer {
+				border-top: 2px solid #657b83;
+			}
+			h4 { /* titles within fieldsets */
+				margin: 5px;
+				text-decoration: underline;
+			}
+			button.big {
+				font-size: 150%;
+				width: 100%;
+				background-color: #268bd2;
+				color: #002b36;
+			}
+			button.small {
+				background-color: transparent;
+				color: #fdf6e3;
+				border: 1px solid #268bd2;
+				border-radius: 10px;
+				padding: 3px;
+			}
+			/* table design */
+			tr:nth-child(even) {background-color: #073642;}
+			tr:nth-child(odd){background-color: #002b36;}
+			th {
+				background-color: #d33682;
+				color: #002b36;
+			}
+			table {border: 1px solid #657b83;}
+			/* Checkbox - prevent weird linewrap*/
+			label {white-space: nowrap;}
+			#table {
+				border-top: 2px solid #657b83;
+				border-bottom: 2px solid #657b83;
+				padding-top: 10px;
+				padding-bottom: 10px;
+			}
+			details {
+				margin-left: 5px;
+			}
+			details[open] {
+				border: 1px solid #657b83;
+				padding: 10px;
+			}
+			/* MOBILE */
+			@media (max-width: 824px){
+				#table {
+					overflow-x: auto;
+				}
+				fieldset/*, div, details, summary, p, li*/ {
+					font-size: 100%;
+				}
+				td, th {
+					font-size: 100%;
+				}
+				button {
+					font-size: 100%;
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<h1>Filtered Gender Bender Anime List</h1>
+		<details>
+			<summary>DISCLAIMER</summary>
+			<p>CLICKING ANY LINKS AS WELL AS READING ANY OF THEESE IS YOUR OWN DECISSION AND I TAKE NO RESPONSIBILITY FOR ANYTHIN THAT MIGHT HAPPEN.</p>
+			<p>I HAVE NO CONNECTION TO ANY OF THE LINKED WEBSITES.</p>
+		</details>
+		<details>
+			<summary>Infos about this Project</summary>
+			<p>I've made this to help you find mangas in this genre (since there aren't too many and not all of them are on MyAnimeList, etc).</p>
+			<p>I hope to be able to continue, improve and exapnd this, but i can't guarantee anything</p>
+			<p>Why do i use AMAB and AFAB instead of boy and girl? i can't always remember (or want to spoil) wheater the characters stay cis (in a wrong body) or change. Also it hopefully avoids a lot of confusion.</p>
+		</details>
+		<details>
+			<summary>Support this Project</summary>
+			<p>If you want to help this small Project, feel free.</p>
+			<p>
+				What can you do:
+				<ul>
+					<li>Suggest more mangas (and animes)</li>
+					<li>Help writing better descriptions</li>
+					<li>Help categorizing and safety-rating theese</li>
+					<li>Suggest Improvements to this list</li>
+				</ul>
+				How?<br>
+				If you know a bit of HTML / JS you can make PRs on the <a href="https://github.com/username746283/gender_bender_manga_list">GitHub page</a>.<br>
+				If not just <a href="https://www.reddit.com/message/compose/?to=Jane6447">write me your suggestions on reddit.</a>
+			</p>
+		</details>
+		<details>
+			<summary>Unsponsored Ads</summary>
+			<p>I don't get paid for this or get any other benefit, theese are just products i personally like to use</p>
+			<h4>Free Android offline Manga Reader without Ads:</h4>
+			<p><a href="https://github.com/tachiyomiorg/tachiyomi">Tachiyomi</a> - it is free, open source, ad-free , can download mangas, has all mangas in this list and has a lot of quality of life features (like lower brightness, auto-cropping, splitting pages, color-correction, night mode, etc).</p>
+			<h4>OpenVPN</h4>
+			<p>OpenVPN has many implimentations for almost every device. Its free and OpenSource. Youll have to find the servers yourself, but you can easily find lists with google. <a href="https://www.vpngate.net/en/">A server list</a>. <a href="https://play.google.com/store/apps/details?id=de.blinkt.openvpn&hl=en&gl=US">An android version</a></p>
+		</details>
+		<details>
+			<summary>Credits</summary>
+			<p>If you help this Project (and dont have a problem with it) youll be added to this list as well</p>
+			<h4>Mangas</h4>
+			<p>I've found many of theese over the years with search-engines and some of them are from r/egg_irl, friends, etc, but  i didn't write down the names back then, therefore most are missing:</p>
+			<ul>
+				<li>Blasian Angel's <a href="https://myanimelist.net/forum/?topicid=136737">list</a> from 2010</li>
+			</ul>
+			<h4>Design</h4>
+			<p>Color-Selection: <a href="https://github.com/altercation/solarized">Solarized</a></p>
+		</details>
+		<div id="options">
+			<fieldset>      <!-- TYPE -->
+				<legend>Type</legend>
+				<button onClick="deselAll_types()" class="small">Deselect All</button>
+				<button onClick="selAll_types()" class="small">Select All</button>
+				<button onClick="selAllAMAB()" class="small">Select All with AMAB</button>
+				<button onClick="selAllAFAB()" class="small">Select All with AFAB</button>
+				<label for="showType"><input id="showType" type="checkbox"/>Show in results</label>
+				<h4>AMAB</h4>
+				<label for="type_1"><input id="type_1" type="checkbox"/>AMAB turns Female</label>
+				<label for="type_2"><input id="type_2" type="checkbox"/>AMAB crossdresses</label>
+				<label for="type_8"><input id="type_8" type="checkbox"/>AMAB as magical girl</label>
+				<label for="type_10"><input id="type_10" type="checkbox"/>Other (AMAB)</label>
+				<h4>AFAB</h4>
+				<label for="type_3"><input id="type_3" type="checkbox"/>AFAB turns Male</label>
+				<label for="type_4"><input id="type_4" type="checkbox"/>AFAB crossdressers</label>
+				<label for="type_11"><input id="type_11" type="checkbox"/>other (AFAB)</label>
+				<h4>Other</h4>
+				<label for="type_0"><input id="type_0" type="checkbox"/>&lt;unknown&gt;</label>
+				<label for="type_5"><input id="type_5" type="checkbox"/>Body Swap</label>
+				<label for="type_6"><input id="type_6" type="checkbox"/>Body Share</label>
+				<label for="type_7"><input id="type_7" type="checkbox"/>Nonbinary</label>
+				<label for="type_9"><input id="type_9" type="checkbox"/>AFAB and AMAB crossdress</label>
+			</fieldset>
+			<fieldset>      <!-- Setting -->
+				<legend>Setting</legend>
+				<button onClick="deselAll_setting()" class="small">Deselect All</button>
+				<button onClick="selAll_setting()" class="small">Select All</button>
+				<label for="showSetting"><input id="showSetting" type="checkbox"/>Show in results</label>
+				<br>
+				<label for="setting_1"><input id="setting_1" type="checkbox" checked/>Real life</label>
+				<label for="setting_2"><input id="setting_2" type="checkbox" checked/>Fantasy World</label>
+				<label for="setting_3"><input id="setting_3" type="checkbox" checked/>Fantasy Game World</label>
+				<label for="setting_4"><input id="setting_4" type="checkbox" checked/>Dark Ages</label>
+				<label for="setting_5"><input id="setting_5" type="checkbox" checked/>Modern World + Magic</label>
+				<label for="setting_6"><input id="setting_6" type="checkbox" checked/>Dating Sim Game</label>
+				<label for="setting_0"><input id="setting_0" type="checkbox" checked/>&lt;unknown / other&gt;</label>
+			</fieldset>
+			<fieldset>      <!-- Offense Filter -->
+				<legend>Offense Filter (WIP)</legend>
+				<span>I tried to rate how offensive it is, but im not the best at rating theese things..</span><br>
+				<span>Since its been a while for some i often left many unrated</span><br>
+				<span>Move slider right to filter more.</span>
+				<input type="range" min="1" max="10" value="1" class="slider" id="offenseSlider">
+				<label for="allowUnrated"><input id="allowUnrated" type="checkbox" checked/>Allow unrated ones</label>
+				<label for="showOffenseRating"><input id="showOffenseRating" type="checkbox"/>Show Offense safety rating in result</label>
+			</fieldset>
+			<button class="big" onclick="generate()" style="margin-top: 20px;margin-bottom: 20px">Search</button>
+			<p>If you don't know what you're doing i'd suggest using a VPN for some of the links (all except MyAnimeList) (if you dont have one look into the \"Unsponsored Ads\"section).</p>
+		</div>
+		<div id="table"></div>
+		<div id="changelog">
+			<h2>Changelog</h2>
+			<p>If i update this list i will list all the changes here -&gt; you dont have to look throu the entire list if you want to check if added something new.</p>
+			<h4>21.09.2021</h4>
+			Improved Mobile view.<br>
+			<br>Included <a href="https://myanimelist.net/forum/?topicid=136737">Blasian Angel's List</a> from 2010 (106 new entries).
+			<br>Added more from my library
+			<h4>18.09.2021</h4>
+			Published<br>
+			16 new entries
+			<h4>16.09.2021</h4>
+			12 New Mangas.<br>
+			Design Changes:
+			<ul>
+				<li>Added sorting option</li>
+				<li>Improved the design</li>
+				<li>Added "Unsponsored Ads"</li>
+				<li>Added Credits</li>
+				<li>Added descriptions</li>
+				<li>Added "how to help" explanation</li>
+				<li>Added Infos about this</li>
+				<li>Added Changelog</li>
+			</ul>
+			<h4>Predecessor v2 (14.09.2021)</h4>
+			<p>A plain text list of mangas and animes (name, description) on pastebin.</p>
+			<ul>
+				<li>all the initial mangas (106)</li>
+			</ul>
+		</div>
+	</body>
 </html>
